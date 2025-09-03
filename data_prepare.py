@@ -110,20 +110,15 @@ def calculate_entropy(s: str) -> float:
 
 def calculate_combinations(s: str) -> float:
     """
-    Calculate approximate number of combinations for a string based on entropy.
-    """
-    entropy = calculate_entropy(s)
-    return 2 ** (entropy * len(s))
-
-def calculate_combinations_bigint(s: str) -> Decimal:
-    """
-    Calculate approximate number of combinations for a string based on entropy using Decimal for large numbers.
+    Use log-scale combinations instead of massive 2^n.
     """
     entropy = calculate_entropy(s)
     length = len(s)
     if length == 0:
-        return Decimal(1)
-    return Decimal(2) ** (Decimal(entropy) * Decimal(length))
+        return 0.0
+    return float(entropy * length)  
+
+
 
 # Secret generators - AWS credentials
 def gen_aws_key():
@@ -153,7 +148,17 @@ def gen_api_key():
     return f"api_key={random_string(32)}"
 
 def gen_password():
-    return f"password={random_string(random.randint(0, 16))}"
+    data = [
+        "password=" + random_string(random.randint(4, 16)),
+        "pwd=" + random_string(random.randint(4, 16)),
+        "pass=" + random_string(random.randint(4, 16)),
+        "passwd=" + random_string(random.randint(4, 16)),
+        "credential=" + random_string(random.randint(4, 16)),
+        "cred=" + random_string(random.randint(4, 16)),
+        "secret=" + random_string(random.randint(4, 16)),
+        "token=" + random_string(random.randint(4, 16)),
+        ]
+    return random.choice(data)
 
 def gen_authorization_header():
     return f"Authorization: Bearer {random_base64(30)}"
@@ -205,19 +210,19 @@ def gen_jdbc_mysql():
     password = random_string(16)
     return f"jdbc:mysql://{host}:3306/{database}?user={username}&password={password}"
 
-def gen_mariadb_connection():
-    host = f"mariadb-{random_string(8).lower()}.mariadb.com"
-    username = random_string(8).lower()
-    password = random_string(16)
-    database = random_string(8).lower()
-    return f"mariadb://{username}:{password}@{host}/{database}"
+# def gen_mariadb_connection():
+#     host = f"mariadb-{random_string(8).lower()}.mariadb.com"
+#     username = random_string(8).lower()
+#     password = random_string(16)
+#     database = random_string(8).lower()
+#     return f"mariadb://{username}:{password}@{host}/{database}"
 
-def gen_sqlplus_command():
-    username = random_string(8).lower()
-    password = random_string(16)
-    host = f"oracle-{random_string(8).lower()}.oracle.com"
-    service = random_string(8).upper()
-    return f"sqlplus {username}/{password}@{host}:1521/{service}"
+# def gen_sqlplus_command():
+#     username = random_string(8).lower()
+#     password = random_string(16)
+#     host = f"oracle-{random_string(8).lower()}.oracle.com"
+#     service = random_string(8).upper()
+#     return f"sqlplus {username}/{password}@{host}:1521/{service}"
 
 # Additional database generators - NoSQL
 def gen_redis_url():
@@ -226,17 +231,17 @@ def gen_redis_url():
     port = "6379"
     return f"redis://{random_string(8).lower()}:{password}@{host}:{port}"
 
-def gen_cassandra_connection():
-    host = f"cassandra-{random_string(8).lower()}.cassandra.cosmos.azure.com"
-    username = random_string(8).lower()
-    password = random_string(16)
-    return f"cassandra_username={username}\ncassandra_password={password}\ncassandra_host={host}"
+# def gen_cassandra_connection():
+#     host = f"cassandra-{random_string(8).lower()}.cassandra.cosmos.azure.com"
+#     username = random_string(8).lower()
+#     password = random_string(16)
+#     return f"cassandra_username={username}\ncassandra_password={password}\ncassandra_host={host}"
 
-def gen_couchbase_uri():
-    host = f"couchbase-{random_string(8).lower()}.couchbase.com"
-    username = random_string(8).lower()
-    password = random_string(16)
-    return f"couchbase://{username}:{password}@{host}"
+# def gen_couchbase_uri():
+#     host = f"couchbase-{random_string(8).lower()}.couchbase.com"
+#     username = random_string(8).lower()
+#     password = random_string(16)
+#     return f"couchbase://{username}:{password}@{host}"
 
 def gen_elasticsearch_connection():
     host = f"elastic-{random_string(8).lower()}.es.amazonaws.com"
@@ -244,39 +249,39 @@ def gen_elasticsearch_connection():
     password = random_string(16)
     return f"https://{username}:{password}@{host}:9200"
 
-def gen_neo4j_connection():
-    host = f"neo4j-{random_string(8).lower()}.graphdatabase.azure.com"
-    username = random_string(8).lower()
-    password = random_string(16)
-    return f"neo4j://{username}:{password}@{host}:7687"
+# def gen_neo4j_connection():
+#     host = f"neo4j-{random_string(8).lower()}.graphdatabase.azure.com"
+#     username = random_string(8).lower()
+#     password = random_string(16)
+#     return f"neo4j://{username}:{password}@{host}:7687"
 
-def gen_cosmosdb_connection():
-    account = random_string(10).lower()
-    key = random_base64(64)
-    return f"AccountEndpoint=https://{account}.documents.azure.com:443/;AccountKey={key};"
+# def gen_cosmosdb_connection():
+#     account = random_string(10).lower()
+#     key = random_base64(64)
+#     return f"AccountEndpoint=https://{account}.documents.azure.com:443/;AccountKey={key};"
 
-def gen_dynamodb_credentials():
-    access_key = random_string(20).upper()
-    secret_key = random_string(40)
-    return f"dynamodb_access_key_id={access_key}\ndynamodb_secret_access_key={secret_key}"
+# def gen_dynamodb_credentials():
+#     access_key = random_string(20).upper()
+#     secret_key = random_string(40)
+#     return f"dynamodb_access_key_id={access_key}\ndynamodb_secret_access_key={secret_key}"
 
-def gen_firestore_credentials():
-    project_id = f"project-{random_string(8).lower()}"
-    private_key_id = random_hex(40)
-    private_key = random_string(64)
-    return f'{{"project_id":"{project_id}","private_key_id":"{private_key_id}","private_key":"{private_key}"}}'
+# def gen_firestore_credentials():
+#     project_id = f"project-{random_string(8).lower()}"
+#     private_key_id = random_hex(40)
+#     private_key = random_string(64)
+#     return f'{{"project_id":"{project_id}","private_key_id":"{private_key_id}","private_key":"{private_key}"}}'
 
-def gen_riak_connection():
-    host = f"riak-{random_string(8).lower()}.riak.com"
-    access_key = random_string(20)
-    secret_key = random_string(40)
-    return f"riak_host={host}\nriak_access_key={access_key}\nriak_secret_key={secret_key}"
+# def gen_riak_connection():
+#     host = f"riak-{random_string(8).lower()}.riak.com"
+#     access_key = random_string(20)
+#     secret_key = random_string(40)
+#     return f"riak_host={host}\nriak_access_key={access_key}\nriak_secret_key={secret_key}"
 
-def gen_hbase_connection():
-    host = f"hbase-{random_string(8).lower()}.hbase.com"
-    username = random_string(8).lower()
-    password = random_string(16)
-    return f"hbase.zookeeper.quorum={host}\nhbase.username={username}\nhbase.password={password}"
+# def gen_hbase_connection():
+#     host = f"hbase-{random_string(8).lower()}.hbase.com"
+#     username = random_string(8).lower()
+#     password = random_string(16)
+#     return f"hbase.zookeeper.quorum={host}\nhbase.username={username}\nhbase.password={password}"
 
 # Secret generators - JWT tokens
 def gen_jwt():
@@ -327,86 +332,86 @@ def gen_certificate_content():
 {random_base64(32)}
 -----END CERTIFICATE-----"""
 
-# Payment service secrets
-def gen_stripe_api_key():
-    return f"sk_live_{random_string(24)}"
+# # Payment service secrets
+# def gen_stripe_api_key():
+#     return f"sk_live_{random_string(24)}"
 
-def gen_stripe_publishable_key():
-    return f"pk_live_{random_string(24)}"
+# def gen_stripe_publishable_key():
+#     return f"pk_live_{random_string(24)}"
 
-def gen_paypal_client_id():
-    return f"AYS{random_string(14).upper()}"
+# def gen_paypal_client_id():
+#     return f"AYS{random_string(14).upper()}"
 
-# def gen_paypal_client_secret():
-#     return random_string(32)
+# # def gen_paypal_client_secret():
+# #     return random_string(32)
 
-def gen_credit_card():
-    cc_types = ["4111111111111111", "5555555555554444", "378282246310005"]
-    base = random.choice(cc_types)
-    expiry = f"{random.randint(1, 12):02d}/{random.randint(23, 30)}"
-    cvv = f"{random.randint(100, 999)}"
-    return f"{base} {expiry} {cvv}"
+# def gen_credit_card():
+#     cc_types = ["4111111111111111", "5555555555554444", "378282246310005"]
+#     base = random.choice(cc_types)
+#     expiry = f"{random.randint(1, 12):02d}/{random.randint(23, 30)}"
+#     cvv = f"{random.randint(100, 999)}"
+#     return f"{base} {expiry} {cvv}"
 
-# Social media API tokens
-def gen_twitter_api_key():
-    return f"{random_string(25)}"
+# # Social media API tokens
+# def gen_twitter_api_key():
+#     return f"{random_string(25)}"
 
-def gen_twitter_api_secret():
-    return f"{random_string(50)}"
+# def gen_twitter_api_secret():
+#     return f"{random_string(50)}"
 
-def gen_facebook_app_token():
-    return f"{random.randint(100000, 999999)}|{random_hex(32)}"
+# def gen_facebook_app_token():
+#     return f"{random.randint(100000, 999999)}|{random_hex(32)}"
 
-def gen_instagram_access_token():
-    return f"IGQ{random_string(32)}"
+# def gen_instagram_access_token():
+#     return f"IGQ{random_string(32)}"
 
-# def gen_linkedin_client_secret():
-#     return random_string(32)
+# # def gen_linkedin_client_secret():
+# #     return random_string(32)
 
-# Webhook URLs
-def gen_slack_webhook():
-    workspace = random_string(8).lower()
-    token_part = random_string(24)
-    return f"https://hooks.slack.com/services/{workspace}/{token_part}/{random_string(24)}"
+# # Webhook URLs
+# def gen_slack_webhook():
+#     workspace = random_string(8).lower()
+#     token_part = random_string(24)
+#     return f"https://hooks.slack.com/services/{workspace}/{token_part}/{random_string(24)}"
 
-def gen_discord_webhook():
-    channel_id = ''.join(random.choice(string.digits) for _ in range(18))
-    token = random_string(68)
-    return f"https://discord.com/api/webhooks/{channel_id}/{token}"
+# def gen_discord_webhook():
+#     channel_id = ''.join(random.choice(string.digits) for _ in range(18))
+#     token = random_string(68)
+#     return f"https://discord.com/api/webhooks/{channel_id}/{token}"
 
-# def gen_twilio_auth_token():
-#     return random_hex(32)
+# # def gen_twilio_auth_token():
+# #     return random_hex(32)
 
-def gen_twilio_sid():
-    return f"AC{random_string(32)}"
+# def gen_twilio_sid():
+#     return f"AC{random_string(32)}"
 
-# Mobile services
-def gen_apns_key():
-    return f"""-----BEGIN PRIVATE KEY-----
-{random_base64(64)}
-{random_base64(32)}
------END PRIVATE KEY-----"""
+# # Mobile services
+# def gen_apns_key():
+#     return f"""-----BEGIN PRIVATE KEY-----
+# {random_base64(64)}
+# {random_base64(32)}
+# -----END PRIVATE KEY-----"""
 
-# def gen_fcm_server_key():
-#     return random_string(40)
+# # def gen_fcm_server_key():
+# #     return random_string(40)
 
-def gen_mobile_signing_key():
-    return f"""-----BEGIN ANDROID KEY-----
-{random_base64(64)}
------END ANDROID KEY-----"""
+# def gen_mobile_signing_key():
+#     return f"""-----BEGIN ANDROID KEY-----
+# {random_base64(64)}
+# -----END ANDROID KEY-----"""
 
-# # Cryptocurrency
-# def gen_wallet_private_key():
-#     return random_hex(64)
+# # # Cryptocurrency
+# # def gen_wallet_private_key():
+# #     return random_hex(64)
 
-def gen_mnemonic():
-    words = ["abandon", "ability", "able", "about", "above", "absent", "absorb", "abstract", 
-             "absurd", "abuse", "access", "accident", "account", "accuse", "achieve", "acid",
-             "acoustic", "acquire", "across", "act", "action", "actor", "actress", "actual"]
-    return " ".join(random.sample(words, 12))
+# def gen_mnemonic():
+#     words = ["abandon", "ability", "able", "about", "above", "absent", "absorb", "abstract", 
+#              "absurd", "abuse", "access", "accident", "account", "accuse", "achieve", "acid",
+#              "acoustic", "acquire", "across", "act", "action", "actor", "actress", "actual"]
+#     return " ".join(random.sample(words, 12))
 
-def gen_crypto_api_key():
-    return f"{random_string(8)}-{random_string(8)}-{random_string(8)}-{random_string(8)}"
+# def gen_crypto_api_key():
+#     return f"{random_string(8)}-{random_string(8)}-{random_string(8)}-{random_string(8)}"
 
 # Secret generators - OAuth tokens
 def gen_oauth_token():
@@ -480,6 +485,12 @@ def gen_noisy_non_secret():
         "password=flower",  # looks like password but normal
         "this is just a token of appreciation",  # natural language
         "debug_mode=true",
+        f"password=${{{''.join(random.choices(string.ascii_lowercase, k=random.randint(3,5)))}}}",
+        f"token={{{''.join(random.choices(string.ascii_lowercase, k=random.randint(3,5)))} }}",
+        f"password={{{''.join(random.choices(string.ascii_lowercase, k=random.randint(3,5)))}}}",
+        f"token={{{''.join(random.choices(string.ascii_lowercase, k=random.randint(3,5)))}}}",
+        f"{''.join(random.choices(string.ascii_lowercase, k=random.randint(3,5)))}={''.join(random.choices(string.ascii_lowercase, k=random.randint(3,5)))}"
+        f"{''.join(random.choices(string.ascii_lowercase, k=random.randint(3,5)))}=${''.join(random.choices(string.ascii_lowercase, k=random.randint(3,5)))}"
         "retry_count=3",
         "config_path=/usr/local/bin",
         "Lorem ipsum dolor sit amet",
@@ -662,21 +673,21 @@ def build_dataset(n=1000, ratio=0.5):
         gen_mssql_connection_string,
         gen_oracle_connection_string,
         gen_jdbc_mysql,
-        gen_mariadb_connection,
-        gen_sqlplus_command,
+        # gen_mariadb_connection,
+        # gen_sqlplus_command,
         
         # Database - NoSQL
         gen_mongo_uri,
         gen_redis_url,
-        gen_cassandra_connection,
-        gen_couchbase_uri,
+        # gen_cassandra_connection,
+        # gen_couchbase_uri,
         gen_elasticsearch_connection,
-        gen_neo4j_connection,
-        gen_cosmosdb_connection,
-        gen_dynamodb_credentials,
-        gen_firestore_credentials,
-        gen_riak_connection,
-        gen_hbase_connection,
+        # gen_neo4j_connection,
+        # gen_cosmosdb_connection,
+        # gen_dynamodb_credentials,
+        # gen_firestore_credentials,
+        # gen_riak_connection,
+        # gen_hbase_connection,
         
         # JWT
         gen_jwt,
@@ -695,34 +706,34 @@ def build_dataset(n=1000, ratio=0.5):
         gen_certificate_content,
         
         # Payment services
-        gen_stripe_api_key,
-        gen_stripe_publishable_key,
-        gen_paypal_client_id,
-        # gen_paypal_client_secret,
-        gen_credit_card,
+        # gen_stripe_api_key,
+        # gen_stripe_publishable_key,
+        # gen_paypal_client_id,
+        # # gen_paypal_client_secret,
+        # gen_credit_card,
         
         # Social media
-        gen_twitter_api_key,
-        gen_twitter_api_secret,
-        gen_facebook_app_token,
-        gen_instagram_access_token,
-        # gen_linkedin_client_secret,
+        # gen_twitter_api_key,
+        # gen_twitter_api_secret,
+        # gen_facebook_app_token,
+        # gen_instagram_access_token,
+        # # gen_linkedin_client_secret,
         
-        # Webhooks
-        gen_slack_webhook,
-        gen_discord_webhook,
-        # gen_twilio_auth_token,
-        gen_twilio_sid,
+        # # Webhooks
+        # gen_slack_webhook,
+        # gen_discord_webhook,
+        # # gen_twilio_auth_token,
+        # gen_twilio_sid,
         
-        # Mobile services
-        gen_apns_key,
-        # gen_fcm_server_key,
-        gen_mobile_signing_key,
+        # # Mobile services
+        # gen_apns_key,
+        # # gen_fcm_server_key,
+        # gen_mobile_signing_key,
         
-        # Cryptocurrency
-        # gen_wallet_private_key,
-        gen_mnemonic,
-        gen_crypto_api_key,
+        # # Cryptocurrency
+        # # gen_wallet_private_key,
+        # gen_mnemonic,
+        # gen_crypto_api_key,
         
         # OAuth
         gen_oauth_token,
@@ -758,21 +769,21 @@ def build_dataset(n=1000, ratio=0.5):
         gen = random.choice(secret_generators)
         secret = gen()
         key_word, context= extract_keys_and_context(secret)  # Just to ensure it runs without error
-        data.append((secret, 1,calculate_entropy(secret),calculate_combinations_bigint(secret),"~".join(key_word),"~".join(context)))  # 1 = secret
+        data.append((secret, 1,calculate_entropy(secret),calculate_combinations(secret),"~".join(key_word),"~".join(context)))  # 1 = secret
     
     # Generate non-secrets
     for _ in range(num_normals):
         gen = random.choice(non_secret_generators)
         secret = gen()
         key_word, context= extract_keys_and_context(secret)  # Just to ensure it runs without error
-        data.append((secret, 0,calculate_entropy(secret),calculate_combinations_bigint(secret),"~".join(key_word),"~".join(context))) # 0 = non secret
+        data.append((secret, 0,calculate_entropy(secret),calculate_combinations(secret),"~".join(key_word),"~".join(context))) # 0 = non secret
     
     random.shuffle(data)
     return pd.DataFrame(data, columns=["text", "label","entropy","combinations","key_indicators","context_indicators"])
 
 # Example usage
 if __name__ == "__main__":
-    df = build_dataset(n=10000, ratio=0.5)
+    df = build_dataset(n=200000, ratio=0.3)
     print(df.sample(20))
     df.to_csv("synthetic_secret_dataset.csv", index=False)
     print("✅ Dataset saved as synthetic_secret_dataset.csv")
